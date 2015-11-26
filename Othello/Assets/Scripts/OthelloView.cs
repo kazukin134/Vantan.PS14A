@@ -82,9 +82,9 @@ public class OthelloView : MonoBehaviour
 
     void Start()
     {
-        for(var r = 0; r < Rows; r++)
+        for (var r = 0; r < Rows; r++)
         {
-            for(var c = 0; c < Columns; c++)
+            for (var c = 0; c < Columns; c++)
             {
                 _cells[r, c] = CreateCell(r, c);
             }
@@ -98,15 +98,18 @@ public class OthelloView : MonoBehaviour
         SelectedRow = 0;
         SelectedColumn = 0;
 
+        UpdatePcaleableCells();
+    }
+
+    private void UpdatePcaleableCells()
+    {
         for (var r = 0; r < Rows; r++)
         {
             for (var c = 0; c < Columns; c++)
             {
-                if (IsPlaceable(r, c, _currentPlayer))
-                {
-                    var renderer = _cells[r, c].GetComponent<Renderer>();
-                    renderer.material = PlaceableMaterial;
-                }
+                var renderer = _cells[r, c].GetComponent<Renderer>();
+                renderer.material = IsPlaceable(r, c, _currentPlayer)
+                    ? PlaceableMaterial : NormalMaterial;
             }
         }
     }
@@ -168,22 +171,10 @@ public class OthelloView : MonoBehaviour
         {
             var cellState = ToCellState(_currentPlayer);
             UpdateCell(SelectedRow, SelectedColumn, cellState);
+            
             _currentPlayer = GetOtherPlayer(_currentPlayer);
+            UpdatePcaleableCells();
         }
-
-        // TODO: 選択セルが変更されたときのみ置き換える
-        //for (var r = 0; r < _cells.GetLength(0); r++)
-        //{
-        //    for (var c = 0; c < _cells.GetLength(1); c++)
-        //    {
-        //        _cells[r, c].GetComponent<Renderer>()
-        //            .material = NormalMaterial;
-        //    }
-        //}
-
-        //var selectedCell = _cells[SelectedRow, SelectedColumn];
-        //var renderer = selectedCell.GetComponent<Renderer>();
-        //renderer.material = SelectedMaterial;
     }
 
     private void UpdateCell(int row, int column, CellState cellState)
@@ -242,19 +233,32 @@ public class OthelloView : MonoBehaviour
         if (state != CellState.None) { return false; }
 
         var other = ToCellState(GetOtherPlayer(player));
-        var nextColumn = column + 1;
-        var nextCell = GetCellState(row, nextColumn);
+        var pc = ToCellState(player);
+        return IsPlaceableByDirection(row, column, -1 , 0, pc, other)
+            || IsPlaceableByDirection(row, column, 1, 0, pc, other)
+            || IsPlaceableByDirection(row, column, 0, -1, pc, other)
+            || IsPlaceableByDirection(row, column, 0, 1, pc, other)
+            || IsPlaceableByDirection(row, column, -1, -1, pc, other)
+            || IsPlaceableByDirection(row, column, -1, 1, pc, other)
+            || IsPlaceableByDirection(row, column, 1, -1, pc, other)
+            || IsPlaceableByDirection(row, column, 1, 1, pc, other);
+    }
+
+    private bool IsPlaceableByDirection(int row, int column, int nr, int nc, CellState player, CellState other)
+    {
+        var nextRow = row + nr;
+        var nextColumn = column + nc;
+        var nextCell = GetCellState(nextRow, nextColumn);
         if (nextCell == other)
         {
-            var pc = ToCellState(player);
-            for (var nc = nextColumn + 1; nc < Columns; nc++)
+            for (int ir = nextRow + nr, ic = nextColumn + nc
+                ; ir < Rows && ic < Columns ; ir++, ic++)
             {
-                var s = GetCellState(row, nc);
+                var s = GetCellState(ir, ic);
                 if (s == other) { continue; }
-                return s == pc;
+                return s == player;
             }
         }
-
         return false;
     }
 
