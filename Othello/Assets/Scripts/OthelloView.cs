@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class OthelloView : MonoBehaviour
@@ -169,12 +170,57 @@ public class OthelloView : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.RightArrow)) { SelectedColumn++; }
         if (Input.GetKeyDown(KeyCode.Return))
         {
-            var cellState = ToCellState(_currentPlayer);
-            UpdateCell(SelectedRow, SelectedColumn, cellState);
-            
+            Place(SelectedRow, SelectedColumn, _currentPlayer);
             _currentPlayer = GetOtherPlayer(_currentPlayer);
             UpdatePcaleableCells();
         }
+    }
+    private void Place(int row, int column, Player player)
+    {
+        var cellState = ToCellState(player);
+        UpdateCell(row, column, cellState);
+
+        var cellPositions = GetReversableCellPositions(row, column, player);
+        foreach (var pt in cellPositions)
+        {
+            UpdateCell(pt.Row, pt.Column, cellState);
+        }
+    }
+
+    private IEnumerable<CellPosition> GetReversableCellPositions(int row, int column, Player player)
+    {
+        var state = GetCellState(row, column);
+        var other = ToCellState(GetOtherPlayer(player));
+        var pc = ToCellState(player);
+
+        var list = new List<CellPosition>();
+        list.AddRange(GetReversableCellPositionsByDirection(row, column, -1, 0, pc, other));
+        list.AddRange(GetReversableCellPositionsByDirection(row, column, 1, 0, pc, other));
+        list.AddRange(GetReversableCellPositionsByDirection(row, column, 0, -1, pc, other));
+        list.AddRange(GetReversableCellPositionsByDirection(row, column, 0, 1, pc, other));
+        list.AddRange(GetReversableCellPositionsByDirection(row, column, -1, -1, pc, other));
+        list.AddRange(GetReversableCellPositionsByDirection(row, column, -1, 1, pc, other));
+        list.AddRange(GetReversableCellPositionsByDirection(row, column, 1, -1, pc, other));
+        list.AddRange(GetReversableCellPositionsByDirection(row, column, 1, 1, pc, other));
+        return list;
+    }
+    private IEnumerable<CellPosition> GetReversableCellPositionsByDirection(int row, int column, int nr, int nc, CellState player, CellState other)
+    {
+        var list = new List<CellPosition>();
+        var nextRow = row + nr;
+        var nextColumn = column + nc;
+        var nextCell = GetCellState(nextRow, nextColumn);
+        if (nextCell == other)
+        {
+            list.Add(new CellPosition(nextRow, nextColumn));
+
+            for (int ir = nextRow + nr, ic = nextColumn + nc
+                ; ir < Rows && ic < Columns; ir += nr, ic += nc)
+            {
+                list.Add(new CellPosition(ir, ic));
+            }
+        }
+        return list;
     }
 
     private void UpdateCell(int row, int column, CellState cellState)
@@ -252,7 +298,7 @@ public class OthelloView : MonoBehaviour
         if (nextCell == other)
         {
             for (int ir = nextRow + nr, ic = nextColumn + nc
-                ; ir < Rows && ic < Columns ; ir++, ic++)
+                ; ir < Rows && ic < Columns ; ir += nr, ic += nc)
             {
                 var s = GetCellState(ir, ic);
                 if (s == other) { continue; }
