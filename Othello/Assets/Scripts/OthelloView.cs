@@ -96,23 +96,29 @@ public class OthelloView : MonoBehaviour
         UpdateCell(4, 3, CellState.White);
         UpdateCell(4, 4, CellState.Black);
 
-        SelectedRow = 0;
-        SelectedColumn = 0;
-
-        UpdatePcaleableCells();
+        UpdateCells();
     }
 
-    private void UpdatePcaleableCells()
+    private void UpdateCells()
     {
         for (var r = 0; r < Rows; r++)
         {
             for (var c = 0; c < Columns; c++)
             {
-                var renderer = _cells[r, c].GetComponent<Renderer>();
-                renderer.material = IsPlaceable(r, c, _currentPlayer)
-                    ? PlaceableMaterial : NormalMaterial;
+                UpdateCellMaterial(r, c);
             }
         }
+    }
+
+    private void UpdateCellMaterial(int row, int column)
+    {
+        var cell = _cells[row, column];
+        cell.GetComponent<Renderer>().material =
+            row == SelectedRow && column == SelectedColumn
+                ? SelectedMaterial
+                : IsPlaceable(row, column, _currentPlayer)
+                    ? PlaceableMaterial
+                    : NormalMaterial;
     }
 
     private int _selectedRow;
@@ -121,17 +127,14 @@ public class OthelloView : MonoBehaviour
         get { return _selectedRow; }
         set
         {
-            SelectedCell.GetComponent<Renderer>().material =
-                IsPlaceable(_selectedRow, SelectedColumn, _currentPlayer)
-                    ? PlaceableMaterial : NormalMaterial;
+            var oldSelectedRow = _selectedRow;
 
             if (value < 0) { _selectedRow = 0; }
             else if (value >= Rows) { _selectedRow = Rows - 1; }
             else { _selectedRow = value; }
 
-            SelectedCell.GetComponent<Renderer>().material =
-                IsPlaceable(_selectedRow, SelectedColumn, _currentPlayer)
-                    ? PlaceableMaterial : SelectedMaterial;
+            UpdateCellMaterial(oldSelectedRow, SelectedColumn);
+            UpdateCellMaterial(_selectedRow, SelectedColumn);
         }
     }
 
@@ -141,17 +144,14 @@ public class OthelloView : MonoBehaviour
         get { return _selectedColumn; }
         set
         {
-            SelectedCell.GetComponent<Renderer>().material =
-                IsPlaceable(SelectedRow, _selectedColumn, _currentPlayer)
-                ? PlaceableMaterial : NormalMaterial;
+            var oldSelectedColumn = _selectedColumn;
 
             if (value < 0) { _selectedColumn = 0; }
             else if (value >= Columns) { _selectedColumn = Columns - 1; }
             else { _selectedColumn = value; }
 
-            SelectedCell.GetComponent<Renderer>().material =
-                IsPlaceable(SelectedRow, _selectedColumn, _currentPlayer)
-                ? PlaceableMaterial : SelectedMaterial;
+            UpdateCellMaterial(SelectedRow, oldSelectedColumn);
+            UpdateCellMaterial(SelectedRow, _selectedColumn);
         }
     }
 
@@ -164,15 +164,15 @@ public class OthelloView : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.UpArrow)) { SelectedRow--; }
-        if (Input.GetKeyDown(KeyCode.DownArrow)) { SelectedRow++; }
+        if (Input.GetKeyDown(KeyCode.UpArrow)) { SelectedRow++; }
+        if (Input.GetKeyDown(KeyCode.DownArrow)) { SelectedRow--; }
         if (Input.GetKeyDown(KeyCode.LeftArrow)) { SelectedColumn--; }
         if (Input.GetKeyDown(KeyCode.RightArrow)) { SelectedColumn++; }
         if (Input.GetKeyDown(KeyCode.Return))
         {
             Place(SelectedRow, SelectedColumn, _currentPlayer);
             _currentPlayer = GetOtherPlayer(_currentPlayer);
-            UpdatePcaleableCells();
+            UpdateCells();
         }
     }
     private void Place(int row, int column, Player player)
@@ -206,21 +206,26 @@ public class OthelloView : MonoBehaviour
     }
     private IEnumerable<CellPosition> GetReversableCellPositionsByDirection(int row, int column, int nr, int nc, CellState player, CellState other)
     {
-        var list = new List<CellPosition>();
-        var nextRow = row + nr;
-        var nextColumn = column + nc;
-        var nextCell = GetCellState(nextRow, nextColumn);
-        if (nextCell == other)
+        var npt = new CellPosition(row + nr, column + nc);
+        if (GetCellState(npt.Row, npt.Column) != other)
         {
-            list.Add(new CellPosition(nextRow, nextColumn));
-
-            for (int ir = nextRow + nr, ic = nextColumn + nc
-                ; ir < Rows && ic < Columns; ir += nr, ic += nc)
-            {
-                list.Add(new CellPosition(ir, ic));
-            }
+            return new CellPosition[0];
         }
-        return list;
+
+        var list = new List<CellPosition>();
+        list.Add(npt);
+        for (
+            var ipt = new CellPosition(npt.Row + nr, npt.Column + nc);
+            ipt.Row >= 0 && ipt.Column >= 0 &&
+            ipt.Row < Rows && ipt.Column < Columns;
+            ipt.Row += nr, ipt.Column += nc)
+        {
+            var s = GetCellState(ipt.Row, ipt.Column);
+            if (s == player) { return list; }
+            else if (s == other) { list.Add(ipt); }
+            else { break; }
+        }
+        return new CellPosition[0];
     }
 
     private void UpdateCell(int row, int column, CellState cellState)
@@ -316,5 +321,13 @@ public class OthelloView : MonoBehaviour
     private static Player GetOtherPlayer(Player player)
     {
         return player == Player.White ? Player.Black : Player.White;
+    }
+
+    private void OnGUI()
+    {
+        GUILayout.Label("Player: " + _currentPlayer);
+
+        GUILayout.Label("Black: " + 0);
+        GUILayout.Label("White: " + 0);
     }
 }
