@@ -161,7 +161,7 @@ public class OthelloView : MonoBehaviour
         get { return _cells[SelectedRow, SelectedColumn]; }
     }
 
-    private Player _currentPlayer = Player.White;
+    private Player _currentPlayer = Player.Black;
     private int _blackCount = 0;
     private int _whiteCount = 0;
 
