@@ -180,6 +180,7 @@ public class OthelloView : MonoBehaviour
         }
     }
 
+    private bool _isGameOver = false;
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.UpArrow)) { SelectedRow++; }
@@ -189,7 +190,9 @@ public class OthelloView : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Return))
         {
             Place(SelectedRow, SelectedColumn, _currentPlayer);
-            _currentPlayer = GetOtherPlayer(_currentPlayer);
+            var other = GetOtherPlayer(_currentPlayer);
+            if (HasPlaceableCell(other)) { _currentPlayer = other; }
+            else { _isGameOver = !HasPlaceableCell(_currentPlayer); }
             UpdateCells();
             UpdateStoneCount();
         }
@@ -296,7 +299,19 @@ public class OthelloView : MonoBehaviour
             : stone.transform.rotation == Quaternion.identity ? CellState.White
                 : CellState.Black;
     }
-    
+
+    private bool HasPlaceableCell(Player player)
+    {
+        for(var r = 0; r < Rows; r++)
+        {
+            for(var c = 0; c < Columns; c++)
+            {
+                if (IsPlaceable(r, c, player)) { return true; }
+            }
+        }
+        return false;
+    }
+     
     private bool IsPlaceable(int row, int column, Player player)
     {
         var state = GetCellState(row, column);
@@ -344,8 +359,8 @@ public class OthelloView : MonoBehaviour
 
     private void OnGUI()
     {
-        GUILayout.Label("Player: " + _currentPlayer);
-
+        if (_isGameOver) { GUILayout.Label("Game over"); }
+        else { GUILayout.Label("Player: " + _currentPlayer);  }
         GUILayout.Label("Black: " + _blackCount);
         GUILayout.Label("White: " + _whiteCount);
     }
