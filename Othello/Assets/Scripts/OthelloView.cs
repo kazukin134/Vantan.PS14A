@@ -97,6 +97,7 @@ public class OthelloView : MonoBehaviour
         UpdateCell(4, 4, CellState.Black);
 
         UpdateCells();
+        UpdateStoneCount();
     }
 
     private void UpdateCells()
@@ -161,6 +162,23 @@ public class OthelloView : MonoBehaviour
     }
 
     private Player _currentPlayer = Player.White;
+    private int _blackCount = 0;
+    private int _whiteCount = 0;
+
+    private void UpdateStoneCount()
+    {
+        _blackCount = 0;
+        _whiteCount = 0;
+        for(var r = 0; r < Rows; r++)
+        {
+            for(var c = 0; c < Columns; c++)
+            {
+                var state = GetCellState(r, c);
+                if (state == CellState.Black) { _blackCount++; }
+                if (state == CellState.White) { _whiteCount++; }
+            }
+        }
+    }
 
     private void Update()
     {
@@ -173,6 +191,7 @@ public class OthelloView : MonoBehaviour
             Place(SelectedRow, SelectedColumn, _currentPlayer);
             _currentPlayer = GetOtherPlayer(_currentPlayer);
             UpdateCells();
+            UpdateStoneCount();
         }
     }
     private void Place(int row, int column, Player player)
@@ -327,7 +346,7 @@ public class OthelloView : MonoBehaviour
     {
         GUILayout.Label("Player: " + _currentPlayer);
 
-        GUILayout.Label("Black: " + 0);
-        GUILayout.Label("White: " + 0);
+        GUILayout.Label("Black: " + _blackCount);
+        GUILayout.Label("White: " + _whiteCount);
     }
 }
