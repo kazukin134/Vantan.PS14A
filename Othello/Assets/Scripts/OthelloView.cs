@@ -91,10 +91,10 @@ public class OthelloView : MonoBehaviour
             }
         }
 
-        UpdateCell(3, 3, CellState.Black);
-        UpdateCell(3, 4, CellState.White);
-        UpdateCell(4, 3, CellState.White);
-        UpdateCell(4, 4, CellState.Black);
+        UpdateCell(3, 3, CellState.White);
+        UpdateCell(3, 4, CellState.Black);
+        UpdateCell(4, 3, CellState.Black);
+        UpdateCell(4, 4, CellState.White);
 
         UpdateCells();
         UpdateStoneCount();
@@ -183,8 +183,8 @@ public class OthelloView : MonoBehaviour
     private bool _isGameOver = false;
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.UpArrow)) { SelectedRow++; }
-        if (Input.GetKeyDown(KeyCode.DownArrow)) { SelectedRow--; }
+        if (Input.GetKeyDown(KeyCode.UpArrow)) { SelectedRow--; }
+        if (Input.GetKeyDown(KeyCode.DownArrow)) { SelectedRow++; }
         if (Input.GetKeyDown(KeyCode.LeftArrow)) { SelectedColumn--; }
         if (Input.GetKeyDown(KeyCode.RightArrow)) { SelectedColumn++; }
         if (Input.GetKeyDown(KeyCode.Return))
@@ -276,7 +276,7 @@ public class OthelloView : MonoBehaviour
         var gameObj = Instantiate(origin);
         gameObj.name = origin.name + "(" + r + ", " + c + ")";
         gameObj.transform.parent = transform;
-        gameObj.transform.Translate(c * CellMargin, 0, r * CellMargin);
+        gameObj.transform.Translate(c * CellMargin, 0, -r * CellMargin);
         return gameObj;
     }
     private GameObject CreateCell(int r, int c)
