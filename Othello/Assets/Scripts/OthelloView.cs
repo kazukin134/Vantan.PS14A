@@ -187,16 +187,30 @@ public class OthelloView : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.DownArrow)) { SelectedRow++; }
         if (Input.GetKeyDown(KeyCode.LeftArrow)) { SelectedColumn--; }
         if (Input.GetKeyDown(KeyCode.RightArrow)) { SelectedColumn++; }
-        if (Input.GetKeyDown(KeyCode.Return))
+        if (Input.GetKeyDown(KeyCode.Return)
+            && IsPlaceable(SelectedRow, SelectedColumn, _currentPlayer))
         {
-            Place(SelectedRow, SelectedColumn, _currentPlayer);
-            var other = GetOtherPlayer(_currentPlayer);
-            if (HasPlaceableCell(other)) { _currentPlayer = other; }
-            else { _isGameOver = !HasPlaceableCell(_currentPlayer); }
+            GoNext(SelectedRow, SelectedColumn);
+
             UpdateCells();
             UpdateStoneCount();
         }
     }
+
+    private string _record = "";
+    private void GoNext(int row, int column)
+    {
+        GoNext(new CellPosition(row, column));
+    }
+    private void GoNext(CellPosition pt)
+    {
+        _record += pt.ToString();
+        Place(pt.Row, pt.Column, _currentPlayer);
+        var other = GetOtherPlayer(_currentPlayer);
+        if (HasPlaceableCell(other)) { _currentPlayer = other; }
+        else { _isGameOver = !HasPlaceableCell(_currentPlayer); }
+    }
+
     private void Place(int row, int column, Player player)
     {
         var cellState = ToCellState(player);
