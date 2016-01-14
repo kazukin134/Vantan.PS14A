@@ -83,6 +83,15 @@ public class OthelloView : MonoBehaviour
 
     void Start()
     {
+        Initialize();
+        Reset();
+
+        UpdateCells();
+        UpdateStoneCount();
+    }
+
+    private void Initialize()
+    {
         for (var r = 0; r < Rows; r++)
         {
             for (var c = 0; c < Columns; c++)
@@ -90,14 +99,39 @@ public class OthelloView : MonoBehaviour
                 _cells[r, c] = CreateCell(r, c);
             }
         }
+    }
+
+    private void Reset()
+    {
+        Clear();
 
         UpdateCell(3, 3, CellState.White);
         UpdateCell(3, 4, CellState.Black);
         UpdateCell(4, 3, CellState.Black);
         UpdateCell(4, 4, CellState.White);
 
-        UpdateCells();
-        UpdateStoneCount();
+        _isGameOver = false;
+        _record = "";
+        _currentPlayer = Player.Black;
+    }
+
+    private void Reset(string record)
+    {
+        Reset();
+
+        var positions = CellPosition.ParseList(record);
+        foreach (var pt in positions) { GoNext(pt); }
+    }
+
+    private void Clear()
+    {
+        for (var r = 0; r < Rows; r++)
+        {
+            for (var c = 0; c < Columns; c++)
+            {
+                UpdateCell(r, c, CellState.None);
+            }
+        }
     }
 
     private void UpdateCells()
@@ -267,9 +301,10 @@ public class OthelloView : MonoBehaviour
     private void UpdateCell(int row, int column, CellState cellState)
     {
         var stone = _stones[row, column];
-        if (cellState == CellState.None && stone != null)
+        if (cellState == CellState.None)
         {
-            Destroy(stone);
+            if (stone != null) { Destroy(stone); }
+            _stones[row, column] = null;
         }
         else
         {
