@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class OthelloView : MonoBehaviour
@@ -85,9 +86,6 @@ public class OthelloView : MonoBehaviour
     {
         Initialize();
         Reset();
-
-        UpdateCells();
-        UpdateStoneCount();
     }
 
     private void Initialize()
@@ -113,6 +111,9 @@ public class OthelloView : MonoBehaviour
         _isGameOver = false;
         _record = "";
         _currentPlayer = Player.Black;
+
+        UpdateCellMaterials();
+        UpdateStoneCount();
     }
 
     private void Reset(string record)
@@ -134,7 +135,7 @@ public class OthelloView : MonoBehaviour
         }
     }
 
-    private void UpdateCells()
+    private void UpdateCellMaterials()
     {
         for (var r = 0; r < Rows; r++)
         {
@@ -195,9 +196,16 @@ public class OthelloView : MonoBehaviour
         get { return _cells[SelectedRow, SelectedColumn]; }
     }
 
+    private PlayerType _blackPlayerType = PlayerType.Human;
+    private PlayerType _whitePlayerType = PlayerType.Computer;
     private Player _currentPlayer = Player.Black;
     private int _blackCount = 0;
     private int _whiteCount = 0;
+
+    private PlayerType GetPlayerType(Player player)
+    {
+        return player == Player.Black ? _blackPlayerType : _whitePlayerType;
+    }
 
     private void UpdateStoneCount()
     {
@@ -217,6 +225,26 @@ public class OthelloView : MonoBehaviour
     private bool _isGameOver = false;
     private void Update()
     {
+        if (_isGameOver) { return; }
+
+        if (GetPlayerType(_currentPlayer) == PlayerType.Human)
+        {
+            UpdatePlayer();
+        }
+        else { UpdateComputer(); }
+    }
+
+    private void UpdateComputer()
+    {
+        var positions = GetPlaceableCellPositions(_currentPlayer).ToArray();
+        GoNext(positions[0]); //TODO: 石を置けるセルから最善手を選択する
+
+        UpdateCellMaterials();
+        UpdateStoneCount();
+    }
+
+    private void UpdatePlayer()
+    {
         if (Input.GetKeyDown(KeyCode.UpArrow)) { SelectedRow--; }
         if (Input.GetKeyDown(KeyCode.DownArrow)) { SelectedRow++; }
         if (Input.GetKeyDown(KeyCode.LeftArrow)) { SelectedColumn--; }
@@ -226,7 +254,7 @@ public class OthelloView : MonoBehaviour
         {
             GoNext(SelectedRow, SelectedColumn);
 
-            UpdateCells();
+            UpdateCellMaterials();
             UpdateStoneCount();
         }
     }
@@ -254,6 +282,20 @@ public class OthelloView : MonoBehaviour
         foreach (var pt in cellPositions)
         {
             UpdateCell(pt.Row, pt.Column, cellState);
+        }
+    }
+
+    private IEnumerable<CellPosition> GetPlaceableCellPositions(Player player)
+    {
+        for (var r = 0; r < Rows; r++)
+        {
+            for (var c = 0; c < Columns; c++)
+            {
+                if (IsPlaceable(r, c, player))
+                {
+                    yield return new CellPosition(r, c);
+                }
+            }
         }
     }
 
