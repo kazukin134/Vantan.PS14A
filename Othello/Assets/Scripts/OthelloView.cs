@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -86,6 +87,8 @@ public class OthelloView : MonoBehaviour
     {
         Initialize();
         Reset();
+
+        StartCoroutine(UpdateGame());
     }
 
     private void Initialize()
@@ -223,39 +226,61 @@ public class OthelloView : MonoBehaviour
     }
 
     private bool _isGameOver = false;
-    private void Update()
+    private IEnumerator UpdateGame()
     {
-        if (_isGameOver) { return; }
-
-        if (GetPlayerType(_currentPlayer) == PlayerType.Human)
+        while (true)
         {
-            UpdatePlayer();
+            while (!_isGameOver)
+            {
+                yield return StartCoroutine(GetUpdateCoroutine());
+            }
+            while (true)
+            {
+                if (Input.GetKeyDown(KeyCode.Escape))
+                {
+                    Reset();
+                    break;
+                }
+                yield return null;
+            }
         }
-        else { UpdateComputer(); }
+    }
+    private IEnumerator GetUpdateCoroutine()
+    {
+        return (GetPlayerType(_currentPlayer) == PlayerType.Human) ?
+                UpdatePlayer() : UpdateComputer();
     }
 
-    private void UpdateComputer()
+    private IEnumerator UpdateComputer()
     {
         var positions = GetPlaceableCellPositions(_currentPlayer).ToArray();
-        GoNext(positions[0]); //TODO: 石を置けるセルから最善手を選択する
+        var pt = positions[UnityEngine.Random.Range(0, positions.Length - 1)];
+        Debug.Log(pt);
+        GoNext(pt); //TODO: 石を置けるセルから最善手を選択する
 
         UpdateCellMaterials();
         UpdateStoneCount();
+        yield return null;
     }
 
-    private void UpdatePlayer()
-    {
-        if (Input.GetKeyDown(KeyCode.UpArrow)) { SelectedRow--; }
-        if (Input.GetKeyDown(KeyCode.DownArrow)) { SelectedRow++; }
-        if (Input.GetKeyDown(KeyCode.LeftArrow)) { SelectedColumn--; }
-        if (Input.GetKeyDown(KeyCode.RightArrow)) { SelectedColumn++; }
-        if (Input.GetKeyDown(KeyCode.Return)
-            && IsPlaceable(SelectedRow, SelectedColumn, _currentPlayer))
-        {
-            GoNext(SelectedRow, SelectedColumn);
 
-            UpdateCellMaterials();
-            UpdateStoneCount();
+    private IEnumerator UpdatePlayer()
+    {
+        while (true)
+        {
+            if (Input.GetKeyDown(KeyCode.UpArrow)) { SelectedRow--; }
+            if (Input.GetKeyDown(KeyCode.DownArrow)) { SelectedRow++; }
+            if (Input.GetKeyDown(KeyCode.LeftArrow)) { SelectedColumn--; }
+            if (Input.GetKeyDown(KeyCode.RightArrow)) { SelectedColumn++; }
+            if (Input.GetKeyDown(KeyCode.Return)
+                && IsPlaceable(SelectedRow, SelectedColumn, _currentPlayer))
+            {
+                GoNext(SelectedRow, SelectedColumn);
+                UpdateCellMaterials();
+                UpdateStoneCount();
+                break;
+            }
+            yield return null;
         }
     }
 
