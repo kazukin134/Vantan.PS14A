@@ -294,14 +294,14 @@ public class OthelloView : MonoBehaviour
     {
         _record += pt.ToString();
         Place(pt.Row, pt.Column, _currentPlayer);
-        var other = GetOtherPlayer(_currentPlayer);
+        var other = _currentPlayer.GetOtherPlayer();
         if (HasPlaceableCell(other)) { _currentPlayer = other; }
         else { _isGameOver = !HasPlaceableCell(_currentPlayer); }
     }
 
     private void Place(int row, int column, Player player)
     {
-        var cellState = ToCellState(player);
+        var cellState = player.ToCellState();
         UpdateCell(row, column, cellState);
 
         var cellPositions = GetReversableCellPositions(row, column, player);
@@ -328,8 +328,8 @@ public class OthelloView : MonoBehaviour
     private IEnumerable<CellPosition> GetReversableCellPositions(int row, int column, Player player)
     {
         var state = GetCellState(row, column);
-        var other = ToCellState(GetOtherPlayer(player));
-        var pc = ToCellState(player);
+        var other = player.GetOtherPlayer().ToCellState();
+        var pc = player.ToCellState();
 
         var list = new List<CellPosition>();
         list.AddRange(GetReversableCellPositionsByDirection(row, column, -1, 0, pc, other));
@@ -434,8 +434,8 @@ public class OthelloView : MonoBehaviour
         var state = GetCellState(row, column);
         if (state != CellState.None) { return false; }
 
-        var other = ToCellState(GetOtherPlayer(player));
-        var pc = ToCellState(player);
+        var other = player.GetOtherPlayer().ToCellState();
+        var pc = player.ToCellState();
         return IsPlaceableByDirection(row, column, -1 , 0, pc, other)
             || IsPlaceableByDirection(row, column, 1, 0, pc, other)
             || IsPlaceableByDirection(row, column, 0, -1, pc, other)
@@ -462,16 +462,6 @@ public class OthelloView : MonoBehaviour
             }
         }
         return false;
-    }
-
-    private static CellState ToCellState(Player player)
-    {
-        return player == Player.Black ? CellState.Black : CellState.White;
-    }
-
-    private static Player GetOtherPlayer(Player player)
-    {
-        return player == Player.White ? Player.Black : Player.White;
     }
 
     private void OnGUI()
